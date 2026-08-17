@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tablatura Harmonetta - Creador Completo</title>
+    <style>
+        :root {
+            --bg-color: #f4f6f8;
+            --border-color: #cbd5e1;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            margin-bottom: 5px;
+            color: #0f172a;
+        }
+
+        p.subtitle {
+            margin-top: 0;
+            color: #64748b;
+            font-size: 0.95rem;
+        }
+
+        .container {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            max-width: 980px;
+            width: 100%;
+        }
+
+        /* Barra de Proyecto (Guardar/Cargar borrador) */
+        .project-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .project-status {
+            font-size: 0.85rem;
+            color: #059669;
+            font-weight: 600;
+        }
+
+        .project-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        /* Información de la Canción */
+        .meta-input-container {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .input-group label {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #334155;
+            margin-bottom: 5px;
+        }
+
+        .input-group input {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 0.95rem;
+            outline: none;
+        }
+
+        .input-group input:focus {
+            border-color: #2563eb;
+        }
+
+        /* Selector de Octava / Embocadura */
+        .octave-selector-container {
+            background-color: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            padding: 12px 18px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .octave-title {
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: #334155;
+        }
+
+        .octave-options {
+            display: flex;
+            gap: 10px;
+        }
+
+        .octave-btn {
+            background: white;
+            border: 2px solid var(--border-color);
+            padding: 6px 14px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: #475569;
+            transition: all 0.15s ease;
+        }
+
+        .octave-btn.active {
+            background: #059669;
+            border-color: #047857;
+            color: white;
+        }
+
+        /* ==================== BOTONERA HEXAGONAL REAL ==================== */
+        .board {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 25px 0;
+            user-select: none;
+            background: #1e293b;
+            padding: 25px 15px;
+            border-radius: 16px;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);
+        }
+
+        .row-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: -12px; /* Intercalado vertical de hexágonos */
+        }
+
+        .row-container:first-child {
+            margin-top: 0;
+        }
+
+        .row-label {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #94a3b8;
+            width: 55px;
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        .row {
+            display: flex;
+            gap: 4px;
+        }
+
+        /* Hexágono Exterior */
+        .hex-wrapper {
+            width: 68px;
+            height: 78px;
+            background: #334155;
+            clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 3px;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        /* Botón Circular Interior */
+        .button-key {
+            width: 58px;
+            height: 58px;
+            background: radial-gradient(circle, #475569 0%, #1e293b 100%);
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: 2px solid #64748b;
+            transition: all 0.15s ease;
+            color: white;
+        }
+
+        .hex-wrapper:hover {
+            background: #475569;
+            transform: scale(1.05);
+            z-index: 5;
+        }
+
+        .hex-wrapper:hover .button-key {
+            border-color: #38bdf8;
+        }
+
+        /* Iluminación cuando el botón se presiona / activa */
+        .hex-wrapper.active {
+            background: #2563eb;
+            filter: drop-shadow(0 0 10px #38bdf8);
+        }
+
+        .hex-wrapper.active .button-key {
+            background: radial-gradient(circle, #2563eb 0%, #1e3a8a 100%);
+            border-color: #60a5fa;
+            box-shadow: inset 0 0 12px rgba(255, 255, 255, 0.6);
+            transform: scale(0.95);
+        }
+
+        .pos-number {
+            font-size: 0.72rem;
+            font-weight: 800;
+            color: #94a3b8;
+            margin-bottom: -2px;
+        }
+
+        .hex-wrapper.active .pos-number {
+            color: #bfdbfe;
+        }
+
+        .note {
+            font-size: 0.95rem;
+            font-weight: bold;
+            color: #ffffff;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+        }
+
+        /* ================================================================= */
+
+        /* Controles de Acción */
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        button.action-btn {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: background 0.15s ease;
+        }
+
+        button.action-btn:hover {
+            background: #1d4ed8;
+        }
+
+        button.action-btn.project-btn {
+            background: #4f46e5;
+        }
+
+        button.action-btn.project-btn:hover {
+            background: #4338ca;
+        }
+
+        button.action-btn.bar-btn {
+            background: #d97706;
+        }
+
+        button.action-btn.bar-btn:hover {
+            background: #b45309;
+        }
+
+        button.action-btn.export-btn {
+            background: #059669;
+        }
+
+        button.action-btn.export-btn:hover {
+            background: #047857;
+        }
+
+        button.action-btn.undo-btn {
+            background: #ea580c;
+        }
+
+        button.action-btn.undo-btn:hover {
+            background: #c2410c;
+        }
+
+        button.action-btn.clear {
+            background: #dc2626;
+        }
+
+        button.action-btn.clear:hover {
+            background: #b91c1c;
+        }
+
+        /* Visualizador de Tablatura */
+        .tab-panel {
+            background: #0f172a;
+            color: #38bdf8;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            box-shadow: inset 0 2px 6px rgba(0,0,0,0.5);
+        }
+
+        .tab-title {
+            font-size: 0.85rem;
+            color: #94a3b8;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        pre.tab-display {
+            font-family: "Courier New", Courier, monospace;
+            font-size: 1.15rem;
+            line-height: 1.35;
+            margin: 0;
+            white-space: pre;
+            color: #38bdf8;
+            font-weight: bold;
+        }
+
+        /* Estilos para impresión / PDF */
+        @media print {
+            body {
+                background: white;
+                color: black;
+                padding: 0;
+            }
+
+            .container {
+                box-shadow: none;
+                padding: 0;
+            }
+
+            .project-bar,
+            .octave-selector-container,
+            .board,
+            .controls,
+            .meta-input-container,
+            .subtitle,
+            h1 {
+                display: none !important;
+            }
+
+            .tab-panel {
+                background: white;
+                color: black;
+                box-shadow: none;
+                padding: 0;
+            }
+
+            pre.tab-display {
+                color: black;
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Generador de Tablatura Harmonetta</h1>
+    <p class="subtitle">Escribe los datos de la canción, selecciona los botones y exporta tu tablatura.</p>
+
+    <!-- Gestor de Proyecto / Avance -->
+    <div class="project-bar">
+        <span class="project-status" id="saveStatus">✓ Avance guardado automáticamente en este navegador</span>
+        <div class="project-actions">
+            <button class="action-btn project-btn" onclick="saveProjectJson()">💾 Guardar Proyecto (.json)</button>
+            <button class="action-btn project-btn" onclick="triggerLoadProject()">📂 Cargar Proyecto</button>
+            <input type="file" id="fileInput" style="display: none;" accept=".json" onchange="loadProjectFile(event)">
+        </div>
+    </div>
+
+    <!-- Datos de la canción -->
+    <div class="meta-input-container">
+        <div class="input-group">
+            <label for="songTitle">Título de la Canción:</label>
+            <input type="text" id="songTitle" placeholder="Ej. Mi Melodía Harmonetta" oninput="renderTab()">
+        </div>
+        <div class="input-group">
+            <label for="songArtist">Autor / Intérprete:</label>
+            <input type="text" id="songArtist" placeholder="Ej. Tu Nombre" oninput="renderTab()">
+        </div>
+    </div>
+
+    <!-- Control de Octava / Embocadura -->
+    <div class="octave-selector-container">
+        <span class="octave-title">Posición en la Embocadura (Octava):</span>
+        <div class="octave-options">
+            <button class="octave-btn" id="oct-B" onclick="selectOctave('B')">Izquierda (Baja - B)</button>
+            <button class="octave-btn active" id="oct-M" onclick="selectOctave('M')">Centro (Media - M)</button>
+            <button class="octave-btn" id="oct-A" onclick="selectOctave('A')">Derecha (Alta - A)</button>
+        </div>
+    </div>
+
+    <!-- Matriz de la Botonera Hexagonal Real -->
+    <div class="board" id="board"></div>
+
+    <!-- Controles -->
+    <div class="controls">
+        <button class="action-btn" onclick="addChordToTab()">+ Añadir evento a la TAB</button>
+        <button class="action-btn bar-btn" onclick="addBarToTab()">| Insertar barra de compás</button>
+        <button class="action-btn undo-btn" onclick="undoLastEvent()">⌫ Deshacer último evento</button>
+        <button class="action-btn export-btn" onclick="downloadTxt()">Descargar (.TXT)</button>
+        <button class="action-btn export-btn" onclick="printPdf()">Exportar a PDF / Imprimir</button>
+        <button class="action-btn clear" onclick="resetTab()">Reiniciar TAB</button>
+    </div>
+
+    <!-- Panel de Notación TAB -->
+    <div class="tab-panel">
+        <div class="tab-title">TABLATURA HARMONETTA:</div>
+        <pre class="tab-display" id="tabOutput"></pre>
+    </div>
+</div>
+
+<script>
+    const layout = [
+        [{c:"1-1", pos:"1", n:"D"}, {c:"1-2", pos:"2", n:"F#/Gb"}, {c:"1-3", pos:"3", n:"Bb/A#"}, {c:"1-4", pos:"4", n:"D"}, {c:"1-5", pos:"5", n:"F#/Gb"}, {c:"1-6", pos:"6", n:"Bb/A#"}],
+        [{c:"2-1", pos:"1", n:"F"}, {c:"2-2", pos:"2", n:"A"}, {c:"2-3", pos:"3", n:"C#/Db"}, {c:"2-4", pos:"4", n:"F"}, {c:"2-5", pos:"5", n:"A"}, {c:"2-6", pos:"6", n:"C#/Db"}, {c:"2-7", pos:"7", n:"F"}],
+        [{c:"3-1", pos:"1", n:"C"}, {c:"3-2", pos:"2", n:"E"}, {c:"3-3", pos:"3", n:"G#/Ab"}, {c:"3-4", pos:"4", n:"C"}, {c:"3-5", pos:"5", n:"E"}, {c:"3-6", pos:"6", n:"G#/Ab"}],
+        [{c:"4-1", pos:"1", n:"D#/Eb"}, {c:"4-2", pos:"2", n:"G"}, {c:"4-3", pos:"3", n:"B"}, {c:"4-4", pos:"4", n:"D#/Eb"}, {c:"4-5", pos:"5", n:"G"}, {c:"4-6", pos:"6", n:"B"}, {c:"4-7", pos:"7", n:"D#/Eb"}],
+        [{c:"5-1", pos:"1", n:"Bb/A#"}, {c:"5-2", pos:"2", n:"D"}, {c:"5-3", pos:"3", n:"F#/Gb"}, {c:"5-4", pos:"4", n:"Bb/A#"}, {c:"5-5", pos:"5", n:"D"}, {c:"5-6", pos:"6", n:"F#/Gb"}]
+    ];
+
+    let selectedKeys = [];
+    let currentOctave = 'M';
+    let tabHistory = [];
+
+    function selectOctave(oct) {
+        currentOctave = oct;
+        document.querySelectorAll('.octave-btn').forEach(btn => btn.classList.remove('active'));
+        document.getElementById(`oct-${oct}`).classList.add('active');
+    }
+
+    function renderBoard() {
+        const boardEl = document.getElementById('board');
+        boardEl.innerHTML = '';
+
+        layout.forEach((row, rowIndex) => {
+            const rowContainer = document.createElement('div');
+            rowContainer.className = 'row-container';
+
+            const labelEl = document.createElement('div');
+            labelEl.className = 'row-label';
+            labelEl.textContent = `Fila ${rowIndex + 1}`;
+            rowContainer.appendChild(labelEl);
+
+            const rowEl = document.createElement('div');
+            rowEl.className = 'row';
+            
+            row.forEach(btn => {
+                const isSelected = selectedKeys.includes(btn.c);
+                
+                const hexWrapper = document.createElement('div');
+                hexWrapper.className = 'hex-wrapper' + (isSelected ? ' active' : '');
+                hexWrapper.onclick = () => toggleKey(btn.c);
+
+                const btnEl = document.createElement('div');
+                btnEl.className = 'button-key';
+                btnEl.innerHTML = `
+                    <span class="pos-number">${btn.pos}</span>
+                    <span class="note">${btn.n}</span>
+                `;
+
+                hexWrapper.appendChild(btnEl);
+                rowEl.appendChild(hexWrapper);
+            });
+
+            rowContainer.appendChild(rowEl);
+            boardEl.appendChild(rowContainer);
+        });
+    }
+
+    function toggleKey(coord) {
+        if (selectedKeys.includes(coord)) {
+            selectedKeys = selectedKeys.filter(c => c !== coord);
+        } else {
+            selectedKeys.push(coord);
+        }
+        renderBoard();
+    }
+
+    function clearSelection() {
+        selectedKeys = [];
+        renderBoard();
+    }
+
+    function addChordToTab() {
+        if (selectedKeys.length === 0) return;
+
+        let stepMap = {1: [], 2: [], 3: [], 4: [], 5: []};
+        
+        selectedKeys.forEach(coord => {
+            const [row, col] = coord.split('-').map(Number);
+            stepMap[row].push(col);
+        });
+
+        tabHistory.push({
+            type: 'chord',
+            octave: currentOctave,
+            stepMap: stepMap
+        });
+
+        clearSelection();
+        renderTab();
+    }
+
+    function addBarToTab() {
+        tabHistory.push({ type: 'bar' });
+        renderTab();
+    }
+
+    function undoLastEvent() {
+        if (tabHistory.length > 0) {
+            tabHistory.pop();
+            renderTab();
+        }
+    }
+
+    function renderTab() {
+        const title = document.getElementById('songTitle').value.trim() || 'Sin Título';
+        const artist = document.getElementById('songArtist').value.trim() || 'Desconocido';
+
+        let header = `========================================================\n`;
+        header += `CANCIÓN: ${title}\n`;
+        header += `AUTOR/A: ${artist}\n`;
+        header += `========================================================\n\n`;
+
+        let lines = {
+            oct: "Octava |---",
+            1:   "Fila 1 |---",
+            2:   "Fila 2 |---",
+            3:   "Fila 3 |---",
+            4:   "Fila 4 |---",
+            5:   "Fila 5 |---"
+        };
+
+        if (tabHistory.length === 0) {
+            lines['oct'] += "-----------------------------------";
+            for (let r = 1; r <= 5; r++) {
+                lines[r] += "-----------------------------------";
+            }
+        } else {
+            tabHistory.forEach(event => {
+                if (event.type === 'bar') {
+                    lines['oct'] += "---|---";
+                    for (let r = 1; r <= 5; r++) {
+                        lines[r] += "---|---";
+                    }
+                } else if (event.type === 'chord') {
+                    lines['oct'] += `${event.octave}---`;
+
+                    for (let r = 1; r <= 5; r++) {
+                        const cols = event.stepMap[r];
+                        if (cols.length === 0) {
+                            lines[r] += "----";
+                        } else if (cols.length === 1) {
+                            lines[r] += `${cols[0]}---`;
+                        } else {
+                            const combo = cols.join('');
+                            lines[r] += `${combo}` + "-".repeat(4 - combo.length);
+                        }
+                    }
+                }
+            });
+        }
+
+        const fullTabText = header + Object.values(lines).join('\n');
+        document.getElementById('tabOutput').textContent = fullTabText;
+
+        saveLocalStorage();
+    }
+
+    /* ---- PERSISTENCIA Y GUARDADO DE PROYECTOS ---- */
+
+    function saveLocalStorage() {
+        const title = document.getElementById('songTitle').value;
+        const artist = document.getElementById('songArtist').value;
+        const data = { title, artist, tabHistory };
+        localStorage.setItem('harmonetta_current_draft', JSON.stringify(data));
+        
+        const statusEl = document.getElementById('saveStatus');
+        if (statusEl) {
+            statusEl.textContent = "✓ Avance guardado automáticamente en este navegador";
+        }
+    }
+
+    function loadLocalStorage() {
+        const saved = localStorage.getItem('harmonetta_current_draft');
+        if (saved) {
+            try {
+                const data = JSON.parse(saved);
+                document.getElementById('songTitle').value = data.title || '';
+                document.getElementById('songArtist').value = data.artist || '';
+                tabHistory = data.tabHistory || [];
+            } catch (e) {
+                console.error("Error al cargar el borrador local", e);
+            }
+        }
+    }
+
+    function saveProjectJson() {
+        const title = document.getElementById('songTitle').value.trim() || 'Proyecto_Harmonetta';
+        const artist = document.getElementById('songArtist').value.trim() || '';
+        const data = {
+            title: title,
+            artist: artist,
+            tabHistory: tabHistory
+        };
+
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `${title.replace(/\s+/g, '_')}_proyecto.json`;
+        link.click();
+    }
+
+    function triggerLoadProject() {
+        document.getElementById('fileInput').click();
+    }
+
+    function loadProjectFile(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const data = JSON.parse(e.target.result);
+                if (data.tabHistory && Array.isArray(data.tabHistory)) {
+                    document.getElementById('songTitle').value = data.title || '';
+                    document.getElementById('songArtist').value = data.artist || '';
+                    tabHistory = data.tabHistory;
+                    renderTab();
+                    alert('¡Proyecto cargado exitosamente!');
+                } else {
+                    alert('El archivo no tiene una estructura de proyecto válida.');
+                }
+            } catch (err) {
+                alert('Ocurrió un error al leer el archivo JSON.');
+            }
+        };
+        reader.readAsText(file);
+        event.target.value = '';
+    }
+
+    function downloadTxt() {
+        const title = document.getElementById('songTitle').value.trim() || 'Tablatura_Harmonetta';
+        const text = document.getElementById('tabOutput').textContent;
+        const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `${title.replace(/\s+/g, '_')}.txt`;
+        link.click();
+    }
+
+    function printPdf() {
+        window.print();
+    }
+
+    function resetTab() {
+        if (confirm('¿Estás seguro de reiniciar? Se borrará el borrador actual.')) {
+            tabHistory = [];
+            document.getElementById('songTitle').value = '';
+            document.getElementById('songArtist').value = '';
+            clearSelection();
+            localStorage.removeItem('harmonetta_current_draft');
+            renderTab();
+        }
+    }
+
+    // Inicializar
+    loadLocalStorage();
+    renderBoard();
+    renderTab();
+</script>
+
+</body>
+</html>
